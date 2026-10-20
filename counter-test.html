@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>百貨櫃位招募測驗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* Layout: one centered column of single-question cards; the finished answer sheet renders as A4 pages for the PDF. */
+:root {
+  --bg: #f5f4f1; --surface: #ffffff; --ink: #1f2430; --muted: #646a78; --line: #dcd9d2;
+  --accent: #23476b; --accent-ink: #ffffff; --brass: #a5772f; --soft: #e8edf3; --bad: #b2372d; --ok: #2e7d4f;
+  --f-display: "Noto Serif TC", "Songti TC", serif;
+  --f-body: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15181e; --surface: #1e222a; --ink: #e9e7e2; --muted: #a2a7b3; --line: #343a45;
+  --accent: #8db4dc; --accent-ink: #10161d; --brass: #d3a85e; --soft: #253041; --bad: #f08c80; --ok: #7fcf9c;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #15181e; --surface: #1e222a; --ink: #e9e7e2; --muted: #a2a7b3; --line: #343a45;
+  --accent: #8db4dc; --accent-ink: #10161d; --brass: #d3a85e; --soft: #253041; --bad: #f08c80; --ok: #7fcf9c;
+  color-scheme: dark }
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+img { max-width: 100% }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px }
+.wrap { max-width: 720px; margin: 0 auto; display: grid; gap: 20px }
+header.brand { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 2px solid var(--brass); padding-bottom: 10px }
+.brand .co { font-size: 13px; letter-spacing: .12em; color: var(--muted) }
+.brand h1 { font-family: var(--f-display); font-size: 24px; margin: 0; text-wrap: balance }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 24px; display: grid; gap: 16px; min-width: 0 }
+h2 { font-family: var(--f-display); font-size: 21px; margin: 0; text-wrap: balance }
+.lead { color: var(--muted); margin: 0 }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px }
+label.f { display: grid; gap: 6px; font-weight: 500; font-size: 15px }
+input[type=text] { font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); width: 100% }
+button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 10px 18px }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700 }
+button:disabled { opacity: .45; cursor: not-allowed }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--brass); outline-offset: 2px }
+ol.rules { margin: 0; padding-left: 1.4em; display: grid; gap: 4px }
+.progress { height: 6px; background: var(--soft); border-radius: 3px; overflow: hidden }
+.progress > i { display: block; height: 100%; background: var(--brass); transition: width .2s }
+.qno { font-size: 13px; letter-spacing: .1em; color: var(--brass); font-weight: 700 }
+.q { font-size: 19px; font-weight: 500; margin: 0 }
+.opts { display: grid; gap: 10px }
+.opt { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; text-align: left; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); width: 100% }
+.opt b { font-family: var(--f-display); color: var(--muted) }
+.opt[aria-pressed="true"] { border-color: var(--accent); background: var(--soft) }
+.opt[aria-pressed="true"] b { color: var(--accent) }
+.pick { display: grid; gap: 8px }
+.pick .lbl { font-weight: 700; font-size: 15px }
+.pick .btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px }
+.pick .btns button { padding: 12px 0; font-weight: 700; font-family: var(--f-display); font-size: 18px }
+.pick .btns button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
+.pick.least .btns button[aria-pressed="true"] { background: var(--brass); border-color: var(--brass); color: var(--accent-ink) }
+.pairs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px }
+@media (max-width: 520px) { .pairs { grid-template-columns: 1fr } }
+.pairs .opt { grid-template-columns: 1fr; min-height: 96px; align-content: center; font-size: 17px }
+.nav { display: flex; justify-content: space-between; gap: 12px }
+.hint { font-size: 14px; color: var(--bad); min-height: 1.4em; margin: 0 }
+.note { font-size: 14px; color: var(--muted); margin: 0 }
+.done-msg { font-size: 14px; color: var(--ok); font-weight: 700; margin: 0 }
+.steps { margin: 0; padding-left: 1.4em; display: grid; gap: 6px }
+.anstext { font: 14px/1.6 var(--f-body); width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); resize: vertical }
+.sum-title { font-size: 17px }
+.sum { display: grid; gap: 10px; padding: 14px; border: 1.5px solid var(--brass); border-radius: 10px; background: var(--bg) }
+.sum-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: baseline }
+.sum-head strong { font-family: var(--f-display); font-size: 18px }
+.sum-head span { font-size: 13px; color: var(--muted) }
+.sum table { width: 100%; border-collapse: collapse; table-layout: fixed; font-variant-numeric: tabular-nums }
+.sum th, .sum td { border: 1px solid var(--line); text-align: center; padding: 4px 0; font-size: 14px }
+.sum th { font-size: 12px; color: var(--muted); font-weight: 500; background: var(--surface) }
+.sum th:first-child { width: 4.2em }
+.sum td { font-weight: 700; font-family: var(--f-display) }
+/* A4 answer sheet (794×1123 px) for the PDF; always a white sheet in both themes. */
+.rpt-host { position: absolute; left: -12000px; top: 0; width: 794px }
+.rpt-page { width: 794px; height: 1123px; background: #ffffff; color: #1f2430; padding: 56px 60px 0; position: relative; font-family: var(--f-body); font-size: 13px; line-height: 1.55 }
+.rpt-body > * + * { margin-top: 12px }
+.rpt-foot { position: absolute; left: 60px; right: 60px; bottom: 26px; display: flex; justify-content: space-between; font-size: 10px; color: #7a7f8a; border-top: 1px solid #dcd9d2; padding-top: 6px }
+.rpt-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #a5772f; padding-bottom: 8px }
+.rpt-head h1 { font-family: var(--f-display); font-size: 22px; margin: 0; color: #1f2430 }
+.rpt-head span { font-size: 11px; letter-spacing: .12em; color: #646a78 }
+.rpt-tbl { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums }
+.rpt-tbl th, .rpt-tbl td { border: 1px solid #cfccc5; padding: 5px 8px; text-align: left; vertical-align: top; color: #1f2430 }
+.rpt-tbl th { background: #f2f0ec; color: #464b57; font-weight: 700 }
+.rpt-code td, .rpt-code th { text-align: center; padding: 4px 2px; font-size: 12px }
+.rpt-sec { font-family: var(--f-display); font-size: 15px; color: #23476b; border-left: 4px solid #a5772f; padding-left: 8px; margin-top: 18px !important }
+.rpt-q p { margin: 0 0 4px; font-weight: 500; color: #1f2430 }
+.rpt-q ul { list-style: none; margin: 0; padding: 0 }
+.rpt-q li { display: grid; grid-template-columns: 64px 1fr; gap: 6px; padding: 3px 8px; color: #6b707c; border-radius: 4px }
+.rpt-q li.m { background: #e8edf3; color: #1f2430 }
+.rpt-q li.l { background: #f7ecd9; color: #1f2430 }
+.rpt-q li b { font-size: 11px; color: #23476b } .rpt-q li.l b { color: #a86b12 }
+@media (prefers-reduced-motion: reduce) { .progress > i { transition: none } }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header class="brand">
+    <h1>百貨櫃位招募測驗</h1>
+    <span class="co">優迪國際股份有限公司</span>
+  </header>
+  <section class="card"><p class="lead">載入中…</p></section>
+</div>
+
+<script>
+(() => {
+/* Questions only — no answer key on this page (applicants open it directly). */
+const SJT = [
+  { q: '快打烊，你正在做日結，有客人進來說「隨便看看」。', o: ['打招呼，告知幾點打烊，讓他慢慢看', '停下日結，陪他逛、介紹商品', '繼續日結，他有問再回答', '打招呼，順便推薦本月新品'] },
+  { q: '客人排隊太久，大聲抱怨你動作慢。', o: ['先道歉、加快處理，結完再說明原因', '說明前面有客人在退貨，請他體諒', '請其他同事來支援結帳', '保持微笑，不回應，專心結帳'] },
+  { q: '客人只想買 A 商品，你知道 B 更適合他但貴 30%，這個月 B 有業績獎勵。', o: ['照客人要的賣 A', '說明 A、B 差別，讓客人自己選', '推薦 B，強調好處', '先賣 A，結帳時再提 B 有活動'] },
+  { q: '收銀機當機，櫃前排了 3 位客人。', o: ['先手寫單據收款，系統好了再補登', '跟客人說明，請他們留電話，系統好了再通知', '打電話問主管備案', '先跟客人說明狀況並估計時間，同時照公司備案處理'] },
+  { q: '主管當著同事的面說你陳列擺錯，但你是照上週主管自己給的圖擺的。', o: ['當場拿出上週的圖說明', '先改，事後私下跟主管確認圖是否更新', '先改，不說什麼', '跟同事說是主管自己給錯'] },
+  { q: '老客人要退貨，已過 7 天鑑賞期 2 天，態度很好。', o: ['照規定婉拒，說明原因', '跟主管申請例外', '幫他換貨，但不退款', '看他是老客人，直接幫他退'] },
+  { q: '你發現前一位客人少收了 50 元（你算錯），客人已經走了。', o: ['跟主管報告，日結時註記', '自己補 50 元進去，不用麻煩', '等客人下次來再補收', '先不說，看日結是不是真的少'] },
+];
+const AGREE = ['非常同意', '同意', '不同意', '非常不同意'];
+const OPN = [
+  { q: '「快過期、反正要報廢的試用品，店員拿回家用不算什麼。」', o: AGREE },
+  { q: '你覺得門市人員裡，大概多少比例曾把贈品或試用品帶回家？', o: ['10% 以下', '10–30%', '30–50%', '50% 以上'] },
+  { q: '「客人很兇的時候，回他幾句也是應該的。」', o: AGREE },
+];
+const PAIRS = [
+  ['我做事會照步驟來，確保不出錯', '我喜歡想新方法把事情做得更快'],
+  ['被誤會時，我很快就能平靜下來', '被誤會時，我會馬上把話說清楚'],
+  ['同事有困難，我通常會主動幫忙', '我答應的事一定準時完成'],
+  ['遇到不熟的人，我很快就能聊開', '我很能體會別人的心情'],
+  ['事情很多時，我還是能保持冷靜', '事情很多時，我會先排好順序再做'],
+  ['我喜歡接觸新事物、學新技能', '我很少因為小事心情不好'],
+  ['我會把東西整理得整整齊齊', '我和大部分人都相處得很好'],
+  ['我喜歡熱鬧、人多的場合', '被批評時，我不太會往心裡去'],
+  ['我寧願吃點虧，也不想跟人起衝突', '我對新點子很有興趣'],
+  ['工作做完後，我會再檢查一次', '壓力大的時候，我也不容易發脾氣'],
+];
+const L = 'ABCD';
+
+const app = document.getElementById('app');
+const h = (tag, attrs = {}, ...kids) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (k === 'class') e.className = v; else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat()) if (c != null) e.append(c.nodeType ? c : document.createTextNode(c));
+  return e;
+};
+const header = () => h('header', { class: 'brand' }, h('h1', {}, '百貨櫃位招募測驗'), h('span', { class: 'co' }, '優迪國際股份有限公司'));
+let shown = null; // scroll to top only when moving to a different screen, not when picking an answer
+const mount = (...cards) => {
+  const key = R.doneAt ? 'done' : R.step, y = window.scrollY;
+  app.replaceChildren(header(), ...cards);
+  window.scrollTo(0, key === shown ? y : 0);
+  shown = key;
+};
+const fmt = iso => { try { return new Date(iso).toLocaleString('zh-TW', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch { return iso; } };
+
+/* Draft kept in this browser only, so a refresh doesn't lose answers. */
+const KEY = 'counter-test-draft-v1';
+const blank = () => ({ name: '', store: '', sjt: SJT.map(() => ({ m: null, l: null })), op: OPN.map(() => null), p: PAIRS.map(() => null), step: 0, doneAt: null });
+let R = blank();
+try { const d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (d && d.sjt && d.sjt.length === SJT.length) R = d; } catch {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(R)); } catch {} };
+
+
+const STEPS = 1 + SJT.length + OPN.length + 1 + PAIRS.length + 1;
+function render() {
+  if (R.doneAt) return finished();
+  const s = R.step;
+  const bar = h('div', { class: 'progress', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(STEPS - 1), 'aria-valuenow': String(s) }, h('i', { style: `width:${(s / (STEPS - 1)) * 100}%` }));
+  const hint = h('p', { class: 'hint', 'aria-live': 'polite' });
+  let body, valid = () => true;
+  const redraw = () => { save(); render(); };
+  if (s === 0) {
+    const f = (id, label, key, ph) => h('label', { class: 'f', for: id }, label, h('input', { type: 'text', id, value: R[key], placeholder: ph, autocomplete: id === 'nm' ? 'name' : 'off', oninput: e => { R[key] = e.target.value; save(); } }));
+    body = [h('h2', {}, '歡迎參加作答'),
+      h('div', { class: 'grid2' }, f('nm', '姓名', 'name', '請填寫中文姓名'), f('st', '應徵櫃點', 'store', '例如：台北 SOGO 忠孝店')),
+      h('ol', { class: 'rules' },
+        h('li', {}, '沒有標準答案。請依你過去實際最常做的方式作答，不是選你覺得「應該」怎麼做。'),
+        h('li', {}, '第 1–7 題：各選一個「最可能做」與一個「最不可能做」，兩個不能選同一項。'),
+        h('li', {}, '其他題目：選一個最符合你的選項。'),
+        h('li', {}, '共 20 題，約 10 分鐘，不限時。'),
+        h('li', {}, '作答完成後請下載 PDF 作答紀錄，回傳給通知你的人資窗口。'))];
+    valid = () => R.name.trim() && R.store.trim() ? true : '請填寫姓名與應徵櫃點。';
+  } else if (s <= SJT.length) {
+    const i = s - 1, it = SJT[i], a = R.sjt[i];
+    const pick = (kind, label) => h('div', { class: 'pick' + (kind === 'l' ? ' least' : '') },
+      h('span', { class: 'lbl' }, label),
+      h('div', { class: 'btns', role: 'group', 'aria-label': label }, ...L.split('').map((c, j) =>
+        h('button', { 'aria-pressed': String(a[kind] === j), onclick: () => { a[kind] = j; if (a.m === a.l) a[kind === 'm' ? 'l' : 'm'] = null; redraw(); } }, c))));
+    body = [h('span', { class: 'qno' }, `第一部分　第 ${i + 1} 題 / 共 10 題`), h('p', { class: 'q' }, it.q),
+      h('div', { class: 'opts' }, ...it.o.map((o, j) => h('div', { class: 'opt', style: 'cursor:default' }, h('b', {}, L[j]), h('span', {}, o)))),
+      h('div', { class: 'grid2' }, pick('m', '我最可能這樣做'), pick('l', '我最不可能這樣做'))];
+    valid = () => a.m != null && a.l != null ? true : '請各選一個「最可能」與「最不可能」。';
+  } else if (s <= SJT.length + OPN.length) {
+    const i = s - 1 - SJT.length, it = OPN[i];
+    body = [h('span', { class: 'qno' }, `第一部分　第 ${i + 8} 題 / 共 10 題`), h('p', { class: 'q' }, it.q),
+      h('div', { class: 'opts' }, ...it.o.map((o, j) => h('button', { class: 'opt', 'aria-pressed': String(R.op[i] === j), onclick: () => { R.op[i] = j; redraw(); } }, h('b', {}, L[j]), h('span', {}, o))))];
+    valid = () => R.op[i] != null ? true : '請選一個選項。';
+  } else if (s === SJT.length + OPN.length + 1) {
+    body = [h('span', { class: 'qno' }, '第二部分'), h('h2', {}, '哪一句比較像你？'),
+      h('p', { class: 'lead' }, '接下來 10 題，每題有兩句話，兩句都沒有好壞之分。請選比較像你的一句。')];
+  } else if (s < STEPS - 1) {
+    const i = s - 2 - SJT.length - OPN.length, it = PAIRS[i];
+    body = [h('span', { class: 'qno' }, `第二部分　第 ${i + 11} 題 / 共 20 題`), h('p', { class: 'q' }, '哪一句比較像你？'),
+      h('div', { class: 'pairs' }, ...[0, 1].map(j => h('button', { class: 'opt', 'aria-pressed': String(R.p[i] === j), onclick: () => { R.p[i] = j; redraw(); } }, it[j])))];
+    valid = () => R.p[i] != null ? true : '請選一句。';
+  } else {
+    body = [h('h2', {}, '最後確認'), h('p', { class: 'lead' }, '按「完成作答」後就不能再修改答案。需要修改可以按「上一題」回去。')];
+  }
+  const isLast = s === STEPS - 1;
+  const back = h('button', { onclick: () => { R.step--; redraw(); }, disabled: s === 0 }, '上一題');
+  const next = h('button', { class: 'primary', onclick: () => {
+    const v = valid(); if (v !== true) { hint.textContent = v; return; }
+    if (isLast) R.doneAt = new Date().toISOString(); else R.step++;
+    redraw();
+  } }, isLast ? '完成作答' : s === 0 ? '開始作答' : '下一題');
+  mount(h('section', { class: 'card' }, bar, ...body, hint, h('div', { class: 'nav' }, back, next)));
+}
+
+/* ---------- Finished: answer-sheet PDF ---------- */
+function sheetBlocks() {
+  const code = h('table', { class: 'rpt-tbl rpt-code' }, h('tbody', {},
+    h('tr', {}, h('th', {}, '題號'), ...SJT.map((_, i) => h('th', {}, `Q${i + 1}`)), ...OPN.map((_, i) => h('th', {}, `Q${i + 8}`))),
+    h('tr', {}, h('th', {}, '最可能／作答'), ...R.sjt.map(a => h('td', {}, L[a.m])), ...R.op.map(v => h('td', {}, L[v]))),
+    h('tr', {}, h('th', {}, '最不可能'), ...R.sjt.map(a => h('td', {}, L[a.l])), ...R.op.map(() => h('td', {}, '—'))),
+    h('tr', {}, h('th', {}, '題號'), ...PAIRS.map((_, i) => h('th', {}, `Q${i + 11}`))),
+    h('tr', {}, h('th', {}, '選擇（1/2）'), ...R.p.map(v => h('td', {}, String(v + 1))))));
+  return [
+    h('div', { class: 'rpt-head' }, h('h1', {}, '百貨櫃位招募測驗　作答紀錄'), h('span', {}, '優迪國際股份有限公司')),
+    h('table', { class: 'rpt-tbl' }, h('tbody', {},
+      h('tr', {}, h('th', {}, '姓名'), h('td', {}, R.name.trim()), h('th', {}, '應徵櫃點'), h('td', {}, R.store.trim())),
+      h('tr', {}, h('th', {}, '完成時間'), h('td', { colspan: '3' }, fmt(R.doneAt))))),
+    h('div', { class: 'rpt-sec' }, '作答代碼'),
+    code,
+    h('div', { class: 'rpt-sec' }, '第一部分　情境題'),
+    ...SJT.map((q, i) => { const a = R.sjt[i]; return h('div', { class: 'rpt-q' }, h('p', {}, `${i + 1}. ${q.q}`),
+      h('ul', {}, ...q.o.map((o, j) => h('li', { class: j === a.m ? 'm' : j === a.l ? 'l' : '' },
+        h('b', {}, j === a.m ? '最可能' : j === a.l ? '最不可能' : ''), h('span', {}, `${L[j]}　${o}`))))); }),
+    h('div', { class: 'rpt-sec' }, '第一部分　看法題'),
+    ...OPN.map((q, i) => h('div', { class: 'rpt-q' }, h('p', {}, `${i + 8}. ${q.q}`),
+      h('ul', {}, ...q.o.map((o, j) => h('li', { class: R.op[i] === j ? 'm' : '' }, h('b', {}, R.op[i] === j ? '選擇' : ''), h('span', {}, `${L[j]}　${o}`)))))),
+    h('div', { class: 'rpt-sec' }, '第二部分　哪一句比較像你'),
+    ...PAIRS.map((p, i) => h('div', { class: 'rpt-q' }, h('p', {}, `${i + 11}.`),
+      h('ul', {}, ...[0, 1].map(j => h('li', { class: R.p[i] === j ? 'm' : '' }, h('b', {}, R.p[i] === j ? '選擇' : ''), h('span', {}, `${j + 1}　${p[j]}`)))))),
+  ];
+}
+function buildPages(host) {
+  const BODY_H = 1123 - 56 - 64, pages = [];
+  let body;
+  const newPage = () => { body = h('div', { class: 'rpt-body' }); const pg = h('div', { class: 'rpt-page' }, body); host.append(pg); pages.push(pg); };
+  newPage();
+  for (const b of sheetBlocks()) {
+    body.append(b);
+    if (body.scrollHeight > BODY_H && body.children.length > 1) { b.remove(); newPage(); body.append(b); }
+  }
+  pages.forEach((pg, i) => pg.append(h('div', { class: 'rpt-foot' }, h('span', {}, '本紀錄僅供優迪國際招募評估使用'), h('span', {}, `第 ${i + 1} / ${pages.length} 頁`))));
+  return pages;
+}
+const safe = t => String(t || '').replace(/[\\/:*?"<>|]/g, '').trim();
+async function makePdf() {
+  const host = h('div', { class: 'rpt-host', 'aria-hidden': 'true' });
+  document.body.append(host);
+  try {
+    try { await document.fonts.ready; } catch {}
+    const pages = buildPages(host);
+    const pdf = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' });
+    for (let i = 0; i < pages.length; i++) {
+      const c = await html2canvas(pages[i], { scale: 2, backgroundColor: '#ffffff', logging: false, scrollX: -window.scrollX, scrollY: -window.scrollY, windowWidth: 1200 });
+      if (i) pdf.addPage();
+      pdf.addImage(c.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, 595.28, 841.89);
+    }
+    return pdf.output('blob');
+  } finally { host.remove(); }
+}
+function answerText() {
+  return [
+    '【百貨櫃位招募測驗 作答紀錄】',
+    `姓名：${R.name.trim()}`,
+    `應徵櫃點：${R.store.trim()}`,
+    `完成時間：${fmt(R.doneAt)}`,
+    `情境題（最可能/最不可能）：${R.sjt.map((a, i) => `Q${i + 1} ${L[a.m]}/${L[a.l]}`).join('、')}`,
+    `看法題：${R.op.map((v, i) => `Q${i + 8} ${L[v]}`).join('、')}`,
+    `二選一：${R.p.map((v, i) => `Q${i + 11} ${v + 1}`).join('、')}`,
+  ].join('\n');
+}
+function finished() {
+  const msg = h('p', { class: 'note', 'aria-live': 'polite' });
+  const text = answerText();
+  const ta = h('textarea', { id: 'ans', readonly: true, rows: '11', class: 'anstext', 'aria-label': '作答內容' }, text);
+  const copyMsg = h('p', { class: 'note', 'aria-live': 'polite' });
+  const copy = h('button', { onclick: async () => {
+    try { await navigator.clipboard.writeText(text); copyMsg.className = 'done-msg'; copyMsg.textContent = '已複製。請貼到 LINE 或 Email 傳給人資窗口。'; }
+    catch { ta.focus(); ta.select(); ta.setSelectionRange(0, text.length); copyMsg.className = 'note'; copyMsg.textContent = '已幫你選取文字，請長按選「複製」，再貼到 LINE 或 Email。'; }
+  } }, '複製作答內容');
+  const summary = h('div', { class: 'sum' },
+    h('div', { class: 'sum-head' }, h('strong', {}, R.name.trim()), h('span', {}, `${R.store.trim()}　${fmt(R.doneAt)}`)),
+    h('table', {}, h('tbody', {},
+      h('tr', {}, h('th', {}, '題'), ...SJT.map((_, i) => h('th', {}, i + 1))),
+      h('tr', {}, h('th', {}, '最可能'), ...R.sjt.map(a => h('td', {}, L[a.m]))),
+      h('tr', {}, h('th', {}, '最不可能'), ...R.sjt.map(a => h('td', {}, L[a.l]))))),
+    h('table', {}, h('tbody', {},
+      h('tr', {}, h('th', {}, '題'), ...OPN.map((_, i) => h('th', {}, i + 8))),
+      h('tr', {}, h('th', {}, '作答'), ...R.op.map(v => h('td', {}, L[v]))))),
+    h('table', {}, h('tbody', {},
+      h('tr', {}, h('th', {}, '題'), ...PAIRS.map((_, i) => h('th', {}, i + 11))),
+      h('tr', {}, h('th', {}, '選擇'), ...R.p.map(v => h('td', {}, v + 1))))));
+  const fname = `招募測驗作答_${safe(R.name)}_${safe(R.store)}.pdf`;
+  let blob = null;
+  const after = h('div', { class: 'row', hidden: true });
+  const gen = h('button', { class: 'primary', onclick: async () => {
+    if (!window.html2canvas || !window.jspdf) { msg.textContent = '這個瀏覽器無法產生 PDF，請改用「複製作答內容」或截圖。'; return; }
+    gen.disabled = true; msg.className = 'note'; msg.textContent = '產生 PDF 中，約需 10 秒，請稍候…';
+    try {
+      blob = await makePdf();
+      const file = new File([blob], fname, { type: 'application/pdf' });
+      const kids = [h('button', { class: 'primary', onclick: () => {
+        const url = URL.createObjectURL(blob);
+        const a = h('a', { href: url, download: fname }); document.body.append(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        msg.className = 'done-msg'; msg.textContent = '已下載。請把 PDF 傳給人資窗口。';
+      } }, '下載 PDF')];
+      if (navigator.canShare && navigator.canShare({ files: [file] })) kids.push(h('button', { onclick: async () => {
+        try { await navigator.share({ files: [file], title: fname }); msg.className = 'done-msg'; msg.textContent = '已開啟分享，請選 LINE 或 Email 傳給人資窗口。'; }
+        catch (e) { if (!e || e.name !== 'AbortError') { msg.className = 'note'; msg.textContent = '無法分享，請改按「下載 PDF」。'; } }
+      } }, '分享 PDF（LINE／Email）'));
+      after.replaceChildren(...kids); after.hidden = false; gen.hidden = true;
+      msg.className = 'done-msg'; msg.textContent = kids.length > 1 ? 'PDF 已產生，請按「下載 PDF」或「分享 PDF」。' : 'PDF 已產生，請按「下載 PDF」。';
+    } catch { msg.className = 'note'; msg.textContent = '產生 PDF 失敗，請改用「複製作答內容」或截圖。'; gen.disabled = false; }
+  } }, '產生作答紀錄 PDF');
+  let armed = false;
+  const again = h('button', { onclick: () => {
+    if (!armed) { armed = true; again.textContent = '確定清除？已作答內容會刪除，再按一次確認'; return; }
+    R = blank(); save(); render();
+  } }, '清除並重新作答');
+  mount(h('section', { class: 'card' },
+    h('h2', {}, `謝謝你，${R.name.trim()}，作答已完成`),
+    h('p', { class: 'lead' }, '公司不會自動收到你的答案，請用下面任一方式回傳給通知你的人資窗口：'),
+    h('ol', { class: 'steps' },
+      h('li', {}, '按「產生作答紀錄 PDF」，再下載或分享，傳給人資窗口。'),
+      h('li', {}, '如果 PDF 無法下載：按「複製作答內容」貼到 LINE 或 Email，或把下方「作答摘要」截圖傳送。')),
+    gen, after, msg,
+    h('div', { class: 'row' }, copy), copyMsg, ta,
+    h('h2', { class: 'sum-title' }, '作答摘要'),
+    summary,
+    h('div', {}, again)));
+}
+
+render();
+})();
+</script>
+</body>
+</html>
