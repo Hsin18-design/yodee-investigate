@@ -39,7 +39,7 @@ h2 { font-family: var(--f-display); font-size: 21px; margin: 0; text-wrap: balan
 .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center }
 .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px }
 label.f { display: grid; gap: 6px; font-weight: 500; font-size: 15px }
-input[type=text] { font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); width: 100% }
+input[type=text], select { font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); width: 100% }
 button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 10px 18px }
 button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700 }
 button:disabled { opacity: .45; cursor: not-allowed }
@@ -141,6 +141,7 @@ const PAIRS = [
   ['工作做完後，我會再檢查一次', '壓力大的時候，我也不容易發脾氣'],
 ];
 const L = 'ABCD';
+const STORES = ['台北大巨蛋', '新店裕隆城', '大直美麗華', '台南新光三越'];
 
 const app = document.getElementById('app');
 const h = (tag, attrs = {}, ...kids) => {
@@ -181,14 +182,17 @@ function render() {
   if (s === 0) {
     const f = (id, label, key, ph) => h('label', { class: 'f', for: id }, label, h('input', { type: 'text', id, value: R[key], placeholder: ph, autocomplete: id === 'nm' ? 'name' : 'off', oninput: e => { R[key] = e.target.value; save(); } }));
     body = [h('h2', {}, '歡迎參加作答'),
-      h('div', { class: 'grid2' }, f('nm', '姓名', 'name', '請填寫中文姓名'), f('st', '應徵櫃點', 'store', '例如：台北大巨蛋、新店裕隆城')),
+      h('div', { class: 'grid2' }, f('nm', '姓名', 'name', '請填寫中文姓名'),
+        h('label', { class: 'f', for: 'st' }, '應徵櫃點', h('select', { id: 'st', onchange: e => { R.store = e.target.value; save(); } },
+          h('option', { value: '', disabled: true, selected: !STORES.includes(R.store) }, '請選擇櫃點'),
+          ...STORES.map(s => h('option', { value: s, selected: R.store === s }, s))))),
       h('ol', { class: 'rules' },
         h('li', {}, '沒有標準答案。請依你過去實際最常做的方式作答，不是選你覺得「應該」怎麼做。'),
         h('li', {}, '第 1–7 題：各選一個「最可能做」與一個「最不可能做」，兩個不能選同一項。'),
         h('li', {}, '其他題目：選一個最符合你的選項。'),
         h('li', {}, '共 20 題，約 10 分鐘，不限時。'),
         h('li', {}, '作答完成後請下載 PDF 作答紀錄，回覆邀請你作答的 104 訊息並附上 PDF。'))];
-    valid = () => R.name.trim() && R.store.trim() ? true : '請填寫姓名與應徵櫃點。';
+    valid = () => !R.name.trim() ? '請填寫姓名。' : !STORES.includes(R.store) ? '請選擇應徵櫃點。' : true;
   } else if (s <= SJT.length) {
     const i = s - 1, it = SJT[i], a = R.sjt[i];
     const pick = (kind, label) => h('div', { class: 'pick' + (kind === 'l' ? ' least' : '') },
