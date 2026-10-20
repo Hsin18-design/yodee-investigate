@@ -187,7 +187,7 @@ function render() {
         h('li', {}, '第 1–7 題：各選一個「最可能做」與一個「最不可能做」，兩個不能選同一項。'),
         h('li', {}, '其他題目：選一個最符合你的選項。'),
         h('li', {}, '共 20 題，約 10 分鐘，不限時。'),
-        h('li', {}, '作答完成後請下載 PDF 作答紀錄，回傳給通知你的人資窗口。'))];
+        h('li', {}, '作答完成後請下載 PDF 作答紀錄，回覆邀請你作答的 104 訊息並附上 PDF。'))];
     valid = () => R.name.trim() && R.store.trim() ? true : '請填寫姓名與應徵櫃點。';
   } else if (s <= SJT.length) {
     const i = s - 1, it = SJT[i], a = R.sjt[i];
@@ -297,8 +297,8 @@ function finished() {
   const ta = h('textarea', { id: 'ans', readonly: true, rows: '11', class: 'anstext', 'aria-label': '作答內容' }, text);
   const copyMsg = h('p', { class: 'note', 'aria-live': 'polite' });
   const copy = h('button', { onclick: async () => {
-    try { await navigator.clipboard.writeText(text); copyMsg.className = 'done-msg'; copyMsg.textContent = '已複製。請貼到 LINE 或 Email 傳給人資窗口。'; }
-    catch { ta.focus(); ta.select(); ta.setSelectionRange(0, text.length); copyMsg.className = 'note'; copyMsg.textContent = '已幫你選取文字，請長按選「複製」，再貼到 LINE 或 Email。'; }
+    try { await navigator.clipboard.writeText(text); copyMsg.className = 'done-msg'; copyMsg.textContent = '已複製。請貼到 104 訊息回覆給人資。'; }
+    catch { ta.focus(); ta.select(); ta.setSelectionRange(0, text.length); copyMsg.className = 'note'; copyMsg.textContent = '已幫你選取文字，請長按選「複製」，再貼到 104 訊息回覆。'; }
   } }, '複製作答內容');
   const summary = h('div', { class: 'sum' },
     h('div', { class: 'sum-head' }, h('strong', {}, R.name.trim()), h('span', {}, `${R.store.trim()}　${fmt(R.doneAt)}`)),
@@ -325,14 +325,14 @@ function finished() {
         const url = URL.createObjectURL(blob);
         const a = h('a', { href: url, download: fname }); document.body.append(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 60000);
-        msg.className = 'done-msg'; msg.textContent = '已下載。請把 PDF 傳給人資窗口。';
+        msg.className = 'done-msg'; msg.textContent = '已下載。請到 104 回覆邀請你作答的訊息，附上這份 PDF。';
       } }, '下載 PDF')];
       if (navigator.canShare && navigator.canShare({ files: [file] })) kids.push(h('button', { onclick: async () => {
-        try { await navigator.share({ files: [file], title: fname }); msg.className = 'done-msg'; msg.textContent = '已開啟分享，請選 LINE 或 Email 傳給人資窗口。'; }
+        try { await navigator.share({ files: [file], title: fname }); msg.className = 'done-msg'; msg.textContent = '存好後，請到 104 回覆邀請你作答的訊息，附上這份 PDF。'; }
         catch (e) { if (!e || e.name !== 'AbortError') { msg.className = 'note'; msg.textContent = '無法分享，請改按「下載 PDF」。'; } }
-      } }, '分享 PDF（LINE／Email）'));
+      } }, '儲存或分享 PDF'));
       after.replaceChildren(...kids); after.hidden = false; gen.hidden = true;
-      msg.className = 'done-msg'; msg.textContent = kids.length > 1 ? 'PDF 已產生，請按「下載 PDF」或「分享 PDF」。' : 'PDF 已產生，請按「下載 PDF」。';
+      msg.className = 'done-msg'; msg.textContent = kids.length > 1 ? 'PDF 已產生，請按「下載 PDF」或「儲存或分享 PDF」存到手機。' : 'PDF 已產生，請按「下載 PDF」。';
     } catch { msg.className = 'note'; msg.textContent = '產生 PDF 失敗，請改用「複製作答內容」或截圖。'; gen.disabled = false; }
   } }, '產生作答紀錄 PDF');
   let armed = false;
@@ -342,10 +342,11 @@ function finished() {
   } }, '清除並重新作答');
   mount(h('section', { class: 'card' },
     h('h2', {}, `謝謝你，${R.name.trim()}，作答已完成`),
-    h('p', { class: 'lead' }, '公司不會自動收到你的答案，請用下面任一方式回傳給通知你的人資窗口：'),
+    h('p', { class: 'lead' }, '公司不會自動收到你的答案，請透過 104 回傳：'),
     h('ol', { class: 'steps' },
-      h('li', {}, '按「產生作答紀錄 PDF」，再下載或分享，傳給人資窗口。'),
-      h('li', {}, '如果 PDF 無法下載：按「複製作答內容」貼到 LINE 或 Email，或把下方「作答摘要」截圖傳送。')),
+      h('li', {}, '按「產生作答紀錄 PDF」，再按「下載 PDF」存到手機或電腦。'),
+      h('li', {}, '打開 104，回覆邀請你作答的那則訊息，附上剛存好的 PDF 送出。'),
+      h('li', {}, '如果 PDF 無法下載或附加：按「複製作答內容」貼到 104 訊息回覆，或把下方「作答摘要」截圖附上。')),
     gen, after, msg,
     h('div', { class: 'row' }, copy), copyMsg, ta,
     h('h2', { class: 'sum-title' }, '作答摘要'),
