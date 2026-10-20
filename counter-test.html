@@ -181,7 +181,7 @@ function render() {
   if (s === 0) {
     const f = (id, label, key, ph) => h('label', { class: 'f', for: id }, label, h('input', { type: 'text', id, value: R[key], placeholder: ph, autocomplete: id === 'nm' ? 'name' : 'off', oninput: e => { R[key] = e.target.value; save(); } }));
     body = [h('h2', {}, '歡迎參加作答'),
-      h('div', { class: 'grid2' }, f('nm', '姓名', 'name', '請填寫中文姓名'), f('st', '應徵櫃點', 'store', '例如：台北 SOGO 忠孝店')),
+      h('div', { class: 'grid2' }, f('nm', '姓名', 'name', '請填寫中文姓名'), f('st', '應徵櫃點', 'store', '例如：台北大巨蛋、新店裕隆城')),
       h('ol', { class: 'rules' },
         h('li', {}, '沒有標準答案。請依你過去實際最常做的方式作答，不是選你覺得「應該」怎麼做。'),
         h('li', {}, '第 1–7 題：各選一個「最可能做」與一個「最不可能做」，兩個不能選同一項。'),
